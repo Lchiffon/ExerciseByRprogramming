@@ -1,0 +1,145 @@
+The R programming for Bayesian Statics Course
+========================================================
+
+## Question 1
+### Draw by Var
+## 
+$$
+\hat{\delta}^{\pi}(x)=\frac{\sum^{m}_{i=1}\theta_{i}exp\{-||x-\theta_{i}||^{2}/2\}}{\sum^{m}_{i=1}exp\{-||x-\theta_{i}||^{2}/2\}}
+$$
+
+```{r}
+
+ts<-function(miu){
+mean=rep(0,1000)
+for (i in 1:1000){
+  mean[i]<-sit(x=miu)
+}
+var(mean)
+}
+sit<-function(x=4){
+rcauchy(10,location=0,scale=1)->rr
+sum=0
+div=0
+for (i in 1:10){
+  sum=rr[i]*exp(-(x-rr[i])^2/2)+sum
+  div=exp(-(x-rr[i])^2/2)+div
+}
+sum/div
+}
+set.seed(763428)
+miu=seq(0,6,by=0.1)
+var=rep(0,61)
+for (i in 1:61){
+  var[i]<-ts(miu[i])
+}
+plot(miu,var)
+```
+
+
+## Question 1.2
+### Draw by Scatter
+
+```{r}
+ts<-function(miu){
+mean=rep(0,1000)
+for (i in 1:1000){
+  mean[i]<-sit(x=miu)
+}
+mean
+}
+sit<-function(x=4){
+rcauchy(10,location=0,scale=1)->rr
+sum=0
+div=0
+for (i in 1:10){
+  sum=rr[i]*exp(-(x-rr[i])^2/2)+sum
+  div=exp(-(x-rr[i])^2/2)+div
+}
+sum/div
+}
+set.seed(93521)
+miu=seq(0,6,by=0.1)
+mean<-ts(miu[1])
+mu<-rep(0,1000)
+for (i in 2:61){
+  mean<-c(mean,ts(miu[i])-miu[i])
+  mu<-c(mu,rep(miu[i],1000))
+}
+library(ggplot2)
+g<-ggplot(,aes(mu,mean))
+g+geom_point()
+```
+
+
+## Question 2 simulate for OLS and LAE
+### LAE is computed by quantreg packages
+### It shows that there are not as many diffierences as we thought
+## Equation: $Y=1+0.5x+\epsilon$
+```{r,results="hide"}
+library(quantreg)
+b1=rep(0,1000)
+b2<-b1
+b3<-b2
+b4<-b3
+for (i in 1:1000){
+x<-runif(100,-100,100)
+e1<-rnorm(100)
+e2<-rt(100,3)
+y=1+x*0.5+e1
+y1=1+x*0.5+e2
+fit1<-lm(y~x)
+fit1$coefficients[2]->b1[i]
+fit2<-rq(y~x,0.5)
+fit2$coefficients[2]->b2[i]
+fit3<-lm(y1~x)
+fit3$coefficients[2]->b3[i]
+fit4<-rq(y1~x,0.5)
+fit4$coefficients[2]->b4[i]
+}
+```
+### OLS method $\epsilon \thicksim N(0,1)$
+```{r}
+summary(b1)
+```
+### LAE method $\epsilon \thicksim N(0,1)$
+```{r}
+summary(b2)
+```
+### OLS method $\epsilon \thicksim t(3)$
+```{r}
+summary(b3)
+```
+### LAE method $\epsilon \thicksim t(3)$
+```{r}
+summary(b4)
+```
+
+## Question 3 MCMC
+### simulate the mean of normal distribution N(3,5)
+```{r,fig.width=13,fig.height=10}
+library(ggplot2)
+mcmc_test<-function(x0=0,n1=1000,bw=1,label=NULL){
+  p<-runif(n1)
+  w<-rnorm(n1)
+  x[1]<-x0
+  for (i in 2:n1){
+    y<-x[i-1]+w[i]*bw
+    r<-min(dnorm(y,3,5)/dnorm(x[i-1],3,5),1)
+    if (r>p[i]){
+      x[i]<-y
+    }else{
+      x[i]<-x[i-1]
+    }
+  }
+  data.frame(n=1:n1,x=x,label=rep(label,n1))->data
+}
+data1<-mcmc_test(100,bw=5,label="x0=100,n=1000,bw=5")
+data2<-mcmc_test(100,bw=1,label="x0=100,n=1000,bw=1")
+data3<-mcmc_test(10,bw=5,label="x0=10,n=1000,bw=5")
+data4<-mcmc_test(100,n=10000,bw=1,label="x0=10,n=10000,bw=5")
+rbind(data1,data2,data3,data4)->data
+pic<-ggplot(data,aes(n,x),col=label)
+pic+geom_path(aes(colour=label))+
+  facet_wrap(~label,ncol=2,scales="free_x")
+```

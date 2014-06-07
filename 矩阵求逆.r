@@ -1,0 +1,9 @@
+function 
+a=eigen(A)
+k=t(a$vector)%*%A%*%a$vector
+k1=diag(k)
+k2=sqrt(k1)
+k3=diag(k2)
+a2=a$vector%*%k3%*%t(a$vector)
+solve(a2)
+end

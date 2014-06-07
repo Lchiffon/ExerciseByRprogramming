@@ -1,0 +1,5 @@
+library(RODBC)
+M=odbcConnectExcel("C:/Users/Administrator/Desktop/浙江10万活跃用户属性.xls")
+x=sqlFetch(M,"导出工作表")
+close(M)
+c(N,n)=dim(x)
